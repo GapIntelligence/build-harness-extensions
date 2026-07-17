@@ -1,10 +1,10 @@
 # You might want to set these when you run make
 GRAFANA_ADMIN_PASSWORD ?= admin
 # Prompt lazily on first use, then cache. A plain ?= $(shell ...) re-runs on every expansion.
+# Do not export: Make would expand this for every recipe env (e.g. tanka/generate).
 ifeq ($(origin LOCAL_DASHBOARD_DIRECTORY),undefined)
 LOCAL_DASHBOARD_DIRECTORY = $(eval LOCAL_DASHBOARD_DIRECTORY := $(shell ${BUILD_HARNESS_EXTENSIONS_PATH}/modules/grafana/scripts/local_dashboard_directory_prompt.sh))$(LOCAL_DASHBOARD_DIRECTORY)
 endif
-export LOCAL_DASHBOARD_DIRECTORY
 CORE_CLUSTER_JSONNET_BRANCH ?= main
 CREATE_GRAFANA_INSTANCE ?= true
 CREATE_GRAFANA_MCP ?= true
