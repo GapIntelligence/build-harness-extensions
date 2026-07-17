@@ -1,9 +1,18 @@
 # You might want to set these when you run make
 GRAFANA_ADMIN_PASSWORD ?= admin
-LOCAL_DASHBOARD_DIRECTORY ?= $(shell ${BUILD_HARNESS_EXTENSIONS_PATH}/modules/grafana/scripts/local_dashboard_directory_prompt.sh)
+# Prompt lazily on first use, then cache. A plain ?= $(shell ...) re-runs on every expansion.
+ifeq ($(origin LOCAL_DASHBOARD_DIRECTORY),undefined)
+LOCAL_DASHBOARD_DIRECTORY = $(eval LOCAL_DASHBOARD_DIRECTORY := $(shell ${BUILD_HARNESS_EXTENSIONS_PATH}/modules/grafana/scripts/local_dashboard_directory_prompt.sh))$(LOCAL_DASHBOARD_DIRECTORY)
+endif
+export LOCAL_DASHBOARD_DIRECTORY
 CORE_CLUSTER_JSONNET_BRANCH ?= main
 CREATE_GRAFANA_INSTANCE ?= true
 CREATE_GRAFANA_MCP ?= true
+# Default: bidirectional grafana-local-sync (UI edits write back to disk).
+# Set to false to skip the syncer and provision dashboards from
+# LOCAL_DASHBOARD_DIRECTORY instead (disk → Grafana only, no write-back).
+# Useful when editing dashboards in an editor/agent and previewing in Grafana.
+CREATE_GRAFANA_SYNCER ?= true
 GRAFANA_IMAGE ?= grafana/grafana:12.3.1
 GRAFANA_PLUGINS ?= natel-discrete-panel,grafana-piechart-panel,grafana-athena-datasource,marcusolsson-json-datasource,yesoreyeram-infinity-datasource
 MCP_GRAFANA_IMAGE ?= mcp/grafana:latest
@@ -16,6 +25,7 @@ GRAFANA_MCP_DOCKER_NAME = grafana_mcp
 
 # Don't change these, unless you understand how they're used in the scripts below and accept the repurcussions
 CONTAINER_DASHBOARD_DIRECTORY = /app/dashboards
+CONTAINER_PROVISIONED_DASHBOARD_DIRECTORY = /dashboards
 ifeq ($(shell git remote get-url origin),git@gitlab.com:mintel/satoshi/kubernetes/jsonnet/sre/monitoring-cluster-jsonnet.git)
 TMP_MONITORING_CLUSTER_JSONNET = .
 else
@@ -24,6 +34,15 @@ endif
 TMP_GRAFANA_DATASOURCES = /tmp/grafana-datasources.yaml
 
 UID=$(shell id -u)
+
+# When the syncer is disabled, load dashboards via Grafana file provisioning (one-way).
+ifeq (${CREATE_GRAFANA_SYNCER}, false)
+GRAFANA_DASHBOARD_MOUNT_ARGS = \
+	-v ${BUILD_HARNESS_EXTENSIONS_PATH}/modules/grafana/dashboards-provider.yaml:/etc/grafana/provisioning/dashboards/provider.yml \
+	-v $$PWD/${LOCAL_DASHBOARD_DIRECTORY}:${CONTAINER_PROVISIONED_DASHBOARD_DIRECTORY}:ro
+else
+GRAFANA_DASHBOARD_MOUNT_ARGS =
+endif
 
 .PHONY: grafana/develop grafana/develop-oss grafana/cleanup grafana/aws-profile-check grafana/monitoring-cluster-jsonnet grafana/setup-local-grafana-mintel grafana/setup-local-grafana-oss grafana/wait-for-grafana grafana/setup-grafana-mcp grafana/setup-grafana-syncer
 
@@ -40,12 +59,12 @@ endif
 
 ## Cleanup docker containers and files associated with grafana/develop
 grafana/cleanup:
-	@echo "Killing ${GRAFANA_LOCAL_DOCKER_NAME}..."
-	@docker kill ${GRAFANA_LOCAL_DOCKER_NAME} || true
-	@echo "Killing ${GRAFANA_MCP_DOCKER_NAME}..."
-	@docker kill ${GRAFANA_MCP_DOCKER_NAME} || true
-	@echo "Killing ${GRAFANA_SYNC_DOCKER_NAME}..."
-	@docker kill ${GRAFANA_SYNC_DOCKER_NAME} || true
+	@for name in ${GRAFANA_LOCAL_DOCKER_NAME} ${GRAFANA_MCP_DOCKER_NAME} ${GRAFANA_SYNC_DOCKER_NAME}; do \
+		if docker container inspect "$$name" >/dev/null 2>&1; then \
+			echo "Killing $$name..."; \
+			docker kill "$$name" >/dev/null; \
+		fi; \
+	done
 	@echo "Removing ${TMP_GRAFANA_DATASOURCES}..."
 	@rm -rf ${TMP_GRAFANA_DATASOURCES}
 	@echo "Cleanup successful."
@@ -74,6 +93,7 @@ grafana/setup-local-grafana-mintel: grafana/aws-profile-check grafana/monitoring
 			--rm -d -p 3000:3000 --user $(UID):$(UID) \
 			-v ${TMP_GRAFANA_DATASOURCES}:/etc/grafana/provisioning/datasources/automatic.yml \
 			-v ${HOME}/.aws:/usr/share/grafana/.aws \
+			$(GRAFANA_DASHBOARD_MOUNT_ARGS) \
 			--env-file ${BUILD_HARNESS_EXTENSIONS_PATH}/modules/grafana/env.list \
 			-e GF_AUTH_ANONYMOUS_ORG_ROLE=Admin \
 			-e GF_AUTH_ANONYMOUS_ENABLED=true \
@@ -89,7 +109,9 @@ grafana/setup-local-grafana-mintel: grafana/aws-profile-check grafana/monitoring
 
 grafana/setup-local-grafana-oss:
 	@docker pull $(GRAFANA_IMAGE)
-	@docker run --rm -d -p 3000:3000 --name ${GRAFANA_LOCAL_DOCKER_NAME} $(GRAFANA_IMAGE)
+	@docker run --rm -d -p 3000:3000 \
+		$(GRAFANA_DASHBOARD_MOUNT_ARGS) \
+		--name ${GRAFANA_LOCAL_DOCKER_NAME} $(GRAFANA_IMAGE)
 
 grafana/wait-for-grafana:
 ifeq (${CREATE_GRAFANA_INSTANCE}, true)
@@ -129,6 +151,19 @@ ifeq (${CREATE_GRAFANA_MCP}, true)
 endif
 
 grafana/setup-grafana-syncer: grafana/wait-for-grafana
+ifeq (${CREATE_GRAFANA_SYNCER}, true)
 	@docker pull mintel/grafana-local-sync:latest
 	@docker run --rm -it --user $(UID):$(UID) --mount type=bind,source=$$PWD/${LOCAL_DASHBOARD_DIRECTORY},target=${CONTAINER_DASHBOARD_DIRECTORY}/LocalDev --network="host" --name ${GRAFANA_SYNC_DOCKER_NAME} mintel/grafana-local-sync:latest -user admin -pass ${GRAFANA_ADMIN_PASSWORD} -dir ${CONTAINER_DASHBOARD_DIRECTORY}
 	@$(MAKE) grafana/cleanup
+else
+ifeq (${CREATE_GRAFANA_INSTANCE}, true)
+	@echo "CREATE_GRAFANA_SYNCER=false: provisioning dashboards from $${PWD}/${LOCAL_DASHBOARD_DIRECTORY}"
+	@echo "Disk → Grafana only (no write-back). Edit local JSON; Grafana reloads every few seconds."
+	@echo "Press Ctrl+C to stop and clean up."
+	@trap '$(MAKE) grafana/cleanup' INT TERM EXIT; docker wait ${GRAFANA_LOCAL_DOCKER_NAME} >/dev/null 2>&1 || true
+else
+	@echo ">> ERROR: CREATE_GRAFANA_SYNCER=false requires CREATE_GRAFANA_INSTANCE=true so dashboards can be provisioned from disk."
+	@echo ">> With an existing Grafana on :3000, leave CREATE_GRAFANA_SYNCER=true (default) to use the syncer."
+	@exit 1
+endif
+endif
