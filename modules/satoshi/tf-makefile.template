@@ -17,7 +17,7 @@ bootstrap:
 	elif [ -f .gitmodules ] && git config --file .gitmodules --get submodule.build-harness-extensions.url >/dev/null 2>&1; then \
 		git submodule update --init --recursive build-harness-extensions ; \
 	else \
-		git submodule add https://github.com/mintel/build-harness-extensions.git build-harness-extensions ; \
+		git submodule add https://github.com/GapIntelligence/build-harness-extensions.git build-harness-extensions ; \
 	fi
 	exit 0
 

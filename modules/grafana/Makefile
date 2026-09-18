@@ -17,7 +17,7 @@ GRAFANA_IMAGE ?= grafana/grafana:12.3.1
 GRAFANA_PLUGINS ?= natel-discrete-panel,grafana-piechart-panel,grafana-athena-datasource,marcusolsson-json-datasource,yesoreyeram-infinity-datasource
 MCP_GRAFANA_IMAGE ?= mcp/grafana:latest
 MCP_GRAFANA_PORT ?= 3001
-MINTEL_BASE_URL ?= mintel.cloud
+MINTEL_BASE_URL ?= openbrand.online
 # Generally no reason to change these defaults, but values don't matter as long as they're different from eachother
 GRAFANA_LOCAL_DOCKER_NAME = grafana_local
 GRAFANA_SYNC_DOCKER_NAME = grafana_sync
@@ -26,7 +26,7 @@ GRAFANA_MCP_DOCKER_NAME = grafana_mcp
 # Don't change these, unless you understand how they're used in the scripts below and accept the repurcussions
 CONTAINER_DASHBOARD_DIRECTORY = /app/dashboards
 CONTAINER_PROVISIONED_DASHBOARD_DIRECTORY = /dashboards
-ifeq ($(shell git remote get-url origin),git@gitlab.com:mintel/satoshi/kubernetes/jsonnet/sre/monitoring-cluster-jsonnet.git)
+ifeq ($(shell git remote get-url origin),git@gitlab.com:openbrand-group/k8s/jsonnet/sre/monitoring-cluster-jsonnet.git)
 TMP_MONITORING_CLUSTER_JSONNET = .
 else
 TMP_MONITORING_CLUSTER_JSONNET = /tmp/monitoring-cluster-jsonnet
@@ -75,7 +75,7 @@ grafana/aws-profile-check:
 
 grafana/monitoring-cluster-jsonnet:
 	@if [ ! -d "$(TMP_MONITORING_CLUSTER_JSONNET)" ]; then \
-		git clone git@gitlab.com:mintel/satoshi/kubernetes/jsonnet/sre/monitoring-cluster-jsonnet.git --depth 1 -b ${CORE_CLUSTER_JSONNET_BRANCH} ${TMP_MONITORING_CLUSTER_JSONNET}; \
+		git clone git@gitlab.com:openbrand-group/k8s/jsonnet/sre/monitoring-cluster-jsonnet.git --depth 1 -b ${CORE_CLUSTER_JSONNET_BRANCH} ${TMP_MONITORING_CLUSTER_JSONNET}; \
 	fi
 ifeq ($(TMP_MONITORING_CLUSTER_JSONNET),.)
 	# You are developing in monitoring-cluster-jsonnet; using local grafana-operator manifests to set up Grafana datasources.
@@ -152,8 +152,8 @@ endif
 
 grafana/setup-grafana-syncer: grafana/wait-for-grafana
 ifeq (${CREATE_GRAFANA_SYNCER}, true)
-	@docker pull mintel/grafana-local-sync:latest
-	@docker run --rm -it --user $(UID):$(UID) --mount type=bind,source=$$PWD/${LOCAL_DASHBOARD_DIRECTORY},target=${CONTAINER_DASHBOARD_DIRECTORY}/LocalDev --network="host" --name ${GRAFANA_SYNC_DOCKER_NAME} mintel/grafana-local-sync:latest -user admin -pass ${GRAFANA_ADMIN_PASSWORD} -dir ${CONTAINER_DASHBOARD_DIRECTORY}
+	@docker pull ghcr.io/gapintelligence/grafana-local-sync:latest
+	@docker run --rm -it --user $(UID):$(UID) --mount type=bind,source=$$PWD/${LOCAL_DASHBOARD_DIRECTORY},target=${CONTAINER_DASHBOARD_DIRECTORY}/LocalDev --network="host" --name ${GRAFANA_SYNC_DOCKER_NAME} ghcr.io/gapintelligence/grafana-local-sync:latest -user admin -pass ${GRAFANA_ADMIN_PASSWORD} -dir ${CONTAINER_DASHBOARD_DIRECTORY}
 	@$(MAKE) grafana/cleanup
 else
 ifeq (${CREATE_GRAFANA_INSTANCE}, true)

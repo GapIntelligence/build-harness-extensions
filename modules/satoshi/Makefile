@@ -31,11 +31,11 @@ endif
 
 ## Update Satoshi Makefile for a particular toolset e.g. k8s and tf
 satoshi/makefile/update/%: FORCE
-	$(shell curl -sSL -o Makefile "https://raw.githubusercontent.com/mintel/build-harness-extensions/main/modules/satoshi/${*}-makefile.template")
+	$(shell curl -sSL -o Makefile "https://raw.githubusercontent.com/GapIntelligence/build-harness-extensions/main/modules/satoshi/${*}-makefile.template")
 
 ## Update Satoshi .tool-versions for a particular toolset e.g. k8s and tf
 satoshi/tools/update/%: FORCE
-	$(shell curl -sSL -o .tool-versions "https://raw.githubusercontent.com/mintel/build-harness-extensions/main/modules/satoshi/${*}-tool-versions")
+	$(shell curl -sSL -o .tool-versions "https://raw.githubusercontent.com/GapIntelligence/build-harness-extensions/main/modules/satoshi/${*}-tool-versions")
 
 ## Update Satoshi mise.tool-versions for k8s toolset and install with mise
 satoshi/tools/install: FORCE
@@ -43,7 +43,7 @@ satoshi/tools/install: FORCE
 
 ## Update Satoshi .pre-commit-config.yaml for a particular toolset e.g. k8s and tf
 satoshi/pre-commit/update/%: FORCE
-	$(shell curl -sSL -o .pre-commit-config.yaml "https://raw.githubusercontent.com/mintel/build-harness-extensions/main/modules/satoshi/${*}-pre-commit-config.yaml.template")
+	$(shell curl -sSL -o .pre-commit-config.yaml "https://raw.githubusercontent.com/GapIntelligence/build-harness-extensions/main/modules/satoshi/${*}-pre-commit-config.yaml.template")
 
 ## Install pre-commit git hook (allows failure; e.g. not a git repo yet)
 satoshi/pre-commit/install: FORCE
@@ -51,15 +51,15 @@ satoshi/pre-commit/install: FORCE
 
 ## Update Satoshi .editorconfig for a particular toolset e.g. k8s and tf
 satoshi/editorconfig/update/%: FORCE
-	$(shell curl -sSL -o .editorconfig "https://raw.githubusercontent.com/mintel/build-harness-extensions/main/modules/satoshi/${*}-editorconfig.template")
+	$(shell curl -sSL -o .editorconfig "https://raw.githubusercontent.com/GapIntelligence/build-harness-extensions/main/modules/satoshi/${*}-editorconfig.template")
 
 ## Update Satoshi .terraform-docs.yml for a particular toolset (tf only)
 satoshi/terraform-docs/update/%: FORCE
-	$(shell curl -sSL -o .terraform-docs.yml "https://raw.githubusercontent.com/mintel/build-harness-extensions/main/modules/satoshi/${*}-terraform-docs.yml.template")
+	$(shell curl -sSL -o .terraform-docs.yml "https://raw.githubusercontent.com/GapIntelligence/build-harness-extensions/main/modules/satoshi/${*}-terraform-docs.yml.template")
 
 ## Update Satoshi .tflint.hcl for a particular toolset (tf only)
 satoshi/tflint/update/%: FORCE
-	$(shell curl -sSL -o .tflint.hcl "https://raw.githubusercontent.com/mintel/build-harness-extensions/main/modules/satoshi/${*}-tflint.hcl.template")
+	$(shell curl -sSL -o .tflint.hcl "https://raw.githubusercontent.com/GapIntelligence/build-harness-extensions/main/modules/satoshi/${*}-tflint.hcl.template")
 
 ## DEPRECATED: Use satoshi/makefile/update/k8s instead
 satoshi/update-makefile:

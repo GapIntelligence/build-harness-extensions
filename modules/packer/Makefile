@@ -1,6 +1,6 @@
 ## Packer helpers
 PACKER_REPO_BRANCH?=main
-PACKER_REPO?=git@gitlab.com:mintel/satoshi/templates/packer-repo.git
+PACKER_REPO?=git@gitlab.com:openbrand-group/templates/packer-repo.git
 PACKER_REPO_DIR=/tmp/packer-repo
 PACKER_SOURCE_FILE="sources.pkr.hcl"
 

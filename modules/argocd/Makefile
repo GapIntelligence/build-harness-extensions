@@ -4,7 +4,7 @@ RELEASE_TAG ?= 0.1.0
 ## Test argocd-image-updater annotations
 updater/test: check-prereq-variables
 	@mkdir -p bin
-	@wget -O bin/argocd-image-updater-tester --header "PRIVATE-TOKEN: $(word 2,$(subst :, ,$(GITLAB_SECRET)))" https://gitlab.com/api/v4/projects/37621397/packages/generic/argocd-image-updater-tester/${RELEASE_TAG}/argocd-image-updater-tester
+	@wget -O bin/argocd-image-updater-tester --header "PRIVATE-TOKEN: $(word 2,$(subst :, ,$(GITLAB_SECRET)))" https://gitlab.com/api/v4/projects/openbrand-group%2Ftools%2Fargocd-image-updater-tester/packages/generic/argocd-image-updater-tester/${RELEASE_TAG}/argocd-image-updater-tester
 	@chmod +x bin/argocd-image-updater-tester
 	@bin/argocd-image-updater-tester
 	@rm bin/argocd-image-updater-tester

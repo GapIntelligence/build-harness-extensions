@@ -72,7 +72,7 @@ mkdir -p lib/${COMPONENT_NAME}
 mkdir -p environments/${COMPONENT_NAME}/{local,aws.dev,aws.dev.monitoring,aws.qa,aws.prod,aws.logs}
 
 
-echo "local m = import 'gitlab.com/mintel/satoshi/kubernetes/jsonnet/sre/libs-jsonnet/utils/main.libsonnet';
+echo "local m = import 'gitlab.com/openbrand-group/k8s/jsonnet/sre/libs-jsonnet/utils/main.libsonnet';
 {
   _config+:: {
     backstage: {
@@ -148,7 +148,7 @@ do
     namespace: $.data._config.namespace,${API_SERVER}
   },
   data:
-    (import 'gitlab.com/mintel/satoshi/kubernetes/jsonnet/sre/cluster-env-jsonnet/${CLUSTER_ENV_FILE}.libsonnet') +
+    (import 'gitlab.com/openbrand-group/k8s/jsonnet/sre/cluster-env-jsonnet/${CLUSTER_ENV_FILE}.libsonnet') +
     (import '${COMPONENT_NAME}/base.libsonnet') +
     {
       appValues+:: {
