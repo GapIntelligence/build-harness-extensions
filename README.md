@@ -1,6 +1,10 @@
 # build-harness-extensions
 
-A collection of build-harness extensions
+Build automation extensions for data tooling, containers, and Kubernetes.
+
+This infrastructure fork is hosted in OpenBrand's GitHub organization. It is intended for engineering workflows, not as a customer-facing SDK. Some targets depend on environment-specific services or credentials; review the relevant target before running it.
+
+For upstream attribution, see the fork relationship displayed by GitHub. Existing third-party references describe the original tooling and integrations.
 
 ## Usage
 
