@@ -2,7 +2,7 @@
 KYVERNO_POLICY_BRANCH ?= main
 KYVERNO_POLICY_DIR = /tmp/kyverno-policy
 KYVERNO_POLICY_SUBDIR ?= rendered/environments/kyverno/aws.prod/manifests
-KYVERNO_POLICY_REPO ?= git@gitlab.com:mintel/satoshi/kubernetes/jsonnet/sre/core-cluster-jsonnet.git
+KYVERNO_POLICY_REPO ?= git@gitlab.com:openbrand-group/k8s/jsonnet/sre/core-cluster-jsonnet.git
 MANIFEST_DIRS:=$(shell find rendered/ -type d -name manifests 2>/dev/null)
 
 .PHONY: kyverno/check-env kyverno/clone-policy kyverno/test
