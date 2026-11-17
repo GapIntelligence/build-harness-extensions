@@ -75,9 +75,6 @@ mkdir -p environments/${COMPONENT_NAME}/{local,aws.dev,aws.dev.monitoring,aws.qa
 echo "local m = import 'gitlab.com/openbrand-group/k8s/jsonnet/sre/libs-jsonnet/utils/main.libsonnet';
 {
   _config+:: {
-    backstage: {
-      component: '${COMPONENT_NAME}',
-    },
     name: '${COMPONENT_NAME}',
     namespace: '${NAMESPACE}',
     owner: '${OWNER}',
